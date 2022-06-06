@@ -115,8 +115,34 @@
 #define AZUL_PRETO			4
 
 
+/* Texto para os dados completos
+*/
+static char *texto_dados[PLANTA_DADOS] = {
+	"Volume de agua no boiler (l)                  ",
+	"Nivel de agua no boiler (m)                   ",
+	"Temperatura da agua no boiler (Celsius)       ",
+	"Temperatura minima agua no boiler (Celsius)   ",
+	"Temperatura da agua no coletor solar (Celsius)",
+	"Temperatura da agua nos canos (Celsius)       ",
+	"Indica bomba do coletor ligada ou nao         ",
+	"Indica bomba de recirculação ligada ou nao    ",
+	"Indica aquecedor ligado ou nao                ",
+	"Indica entrada de agua aberta ou nao          ",
+	"Indica saida de agua para esgoto aberta ou nao"
+	};
+
+
+
 // Mutex para compartilhar a tela entre várias threads
 static pthread_mutex_t tela = PTHREAD_MUTEX_INITIALIZER;
+
+
+/* Texto para os dados completos
+*/
+char **textosCompletos(void)
+{
+	return texto_dados;
+}
 
 
 /** Inicializa o console
@@ -133,11 +159,13 @@ int console_modoJanela(void)
 	if( LINES < PLANTA_DADOS+3 ) {
 		console_modoNormal();
 		printf("Tamanho (altura) do terminal não é suficiente\n");
+		statusSistema.termina = 1;
 		return -1;
 	}
 	if( COLS < 80 ) {
 		console_modoNormal();
 		printf("Tamanho (largura) do terminal não é suficiente\n");
+		statusSistema.termina = 1;
 		return -1;
 	}
 
@@ -203,9 +231,59 @@ static void recebidoControlador(char *s)
 
 /** Atualiza o terminal com os dados da planta, em modo janela
 */
-void console_showPlantaTudo(void)
+void console_mostraDados(void)
 {
-	
+	char **textos = textosCompletos();
+	double dados[PLANTA_DADOS];
+	int atrib;
+
+	planta_dadosCompletos(dados);
+
+	pthread_mutex_lock(&tela);
+
+	// Linhas apenas para leitura
+	for( int i=0; i<PLANTA_DADOS-5-1; ++i) {
+		if( i%2==0 )
+			atrib = A_NORMAL;
+		else
+			atrib = COLOR_PAIR(AMARELO_PRETO);
+		attron(atrib);
+		mvprintw(i,0,"%s: %8.3lf", textos[i], dados[i]);
+		attroff(atrib);		// Desativa atributos
+	}
+
+	// Linha para +/-
+	if( PLANTA_DADOS-5-3-1%2==0 )
+		atrib = A_NORMAL;
+	else
+		atrib = COLOR_PAIR(AMARELO_PRETO);
+	attron(atrib);
+	mvprintw(PLANTA_DADOS-5-3-1,0,"%s: %8.3lf      [+|-]", textos[PLANTA_DADOS-5-3-1], dados[PLANTA_DADOS-5-3-1]);
+	attroff(atrib);		// Desativa atributos
+
+
+	// Linhas para liga/desliga
+	for( int i=PLANTA_DADOS-5-1; i<PLANTA_DADOS-1; ++i) {
+		if( dados[i] != 0 )
+			atrib = COLOR_PAIR(VERDE_PRETO);
+		else
+			atrib = COLOR_PAIR(VERMELHO_PRETO);
+		attron(atrib);
+		mvprintw(i,0,"%s:  %3d", textos[i], (int)dados[i]);
+		attroff(atrib);		// Desativa atributos
+	}
+
+	// // Linha de erro
+	// if( dados[PLANTA_DADOS-1] != 0 )
+	// 	atrib = COLOR_PAIR(VERMELHO_PRETO) | A_BLINK;
+	// else
+	// 	atrib = COLOR_PAIR(VERDE_PRETO);
+	// attron(atrib);
+	// mvprintw(PLANTA_DADOS-1, 0, "%s:   %s", textos[PLANTA_DADOS-1], dados[PLANTA_DADOS-1]!=0?"ERRO":"OK");
+	// attroff(atrib);		// Desativa atributos
+	move(LINHA_NUVEM+2,0);
+	refresh();
+	pthread_mutex_unlock(&tela);
 }
 
 
@@ -219,7 +297,7 @@ void console_threadConsole(void)
 	
 	pthread_mutex_lock(&tela);
 	move(LINHA_ENTRADA,0);
-	printw("Digite n + - F1 F2 F3 F4 F5  p/comandos  ou  X p/terminar: ");
+	printw("Digite + - p/comandos  ou  X p/terminar: ");
 	move(LINHA_NUVEM,0);
 	printw("[N] RECEBIDO     BYTES= ");
 	refresh();
@@ -238,16 +316,14 @@ void console_threadConsole(void)
 			// 		recebidoControlador(m);
 			// 		console_showPlantaTudo();
 			// 		break;
-			// case '+':
-			// 		v = planta_leVazaoConsumo();
-			// 		planta_defineVazaoConsumo( v + 0.1 );
-			// 		console_showPlantaTudo();
-			// 		break;
-			// case '-':
-			// 		v = planta_leVazaoConsumo();
-			// 		planta_defineVazaoConsumo( v - 0.1 );
-			// 		console_showPlantaTudo();
-			// 		break;
+			case '+':
+					statusSistema.tempMinimaBoiler += 0.5;
+					console_mostraDados();
+					break;
+			case '-':
+					statusSistema.tempMinimaBoiler -= 0.5;
+					console_mostraDados();
+					break;
 			// case KEY_F(1):
 			// 		planta_acionaBombaColetor( (planta_leBombaColetor()+1) % 2 );
 			// 		console_showPlantaTudo();

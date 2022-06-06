@@ -8,11 +8,13 @@
 #include <stdlib.h>
 #include <netdb.h>
 #include <unistd.h>
+#include <pthread.h>
 
 #include "acionamento.h"
 #include "controlador.h"
 #include "console.h"
 
+pthread_mutex_t socketx = PTHREAD_MUTEX_INITIALIZER;
 
 int cria_socket_local(void)
 {
@@ -57,17 +59,19 @@ struct sockaddr_in cria_endereco_destino(char *destino, int porta_destino)
 void envia_mensagem(int socket_local, struct sockaddr_in endereco_destino, char *mensagem)
 {
 	/* Envia msg ao servidor */
-
+    pthread_mutex_lock(&socketx);
 	if (sendto(socket_local, mensagem, strlen(mensagem)+1, 0, (struct sockaddr *) &endereco_destino, sizeof(endereco_destino)) < 0 )
 	{
 		perror("sendto");
 		return;
 	}
+    pthread_mutex_unlock(&socketx);
 }
 
 
 int recebe_mensagem(int socket_local, char *buffer, int tam_buffer)
 {
+    pthread_mutex_lock(&socketx);
 	int bytes_recebidos;		/* Numero de bytes recebidos */
 
 	/* Espera pela msg de resposta do servidor */
@@ -76,7 +80,7 @@ int recebe_mensagem(int socket_local, char *buffer, int tam_buffer)
 	{
 		perror("recvfrom");
 	}
-
+    pthread_mutex_unlock(&socketx);
 	return bytes_recebidos;
 }
 
@@ -103,12 +107,12 @@ static int separaCampos( char *buffer, char *campos[], int maxCampos)
 }
 
 
-int acionaPeriferico(int socket_local, struct sockaddr_in endereco_destino, char dispositivo, char comando){
+char acionaPeriferico(int socket_local, struct sockaddr_in endereco_destino, char dispositivo, char comando){
     
     char bufferIn[TAM_BUFFER];
 	char bufferOut[TAM_BUFFER];
     char device[50];
-
+    // printf("dispositivo: %d - comando: %d\n",dispositivo, comando);
     switch (dispositivo)
     {
     case BOMBACOLETOR:
@@ -145,6 +149,7 @@ int acionaPeriferico(int socket_local, struct sockaddr_in endereco_destino, char
 
     sprintf(device, "z");
     strcat(device, bufferOut);
+    // printf("%s %d", bufferIn, strcmp(bufferIn, device));
     if(strcmp(bufferIn, device) == 0){  // Verifica se comando recebido corresponde ao enviado.
         return comando;
     }else{

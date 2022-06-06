@@ -26,7 +26,7 @@ void console_showTempos(void);
 
 /** Atualiza o terminal com os dados da planta, em modo janela
 */
-void console_showPlantaTudo(void);
+void console_mostraDados(void);
 
 
 

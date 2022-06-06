@@ -28,7 +28,7 @@ int recebe_mensagem(int socket_local, char *buffer, int tam_buffer);
 
 static int separaCampos( char *buffer, char *campos[], int maxCampos);
 
-int acionaPeriferico(int socket_local, struct sockaddr_in endereco_destino, char dispositivo, char comando);
+char acionaPeriferico(int socket_local, struct sockaddr_in endereco_destino, char dispositivo, char comando);
 
 float recebeSensor(int socket_local, struct sockaddr_in endereco_destino, char dispositivo);
 

@@ -5,16 +5,19 @@ typedef struct controlador
 {
     float nivelBoiler;
     float tempBoiler;
+    float tempMinimaBoiler;
     float tempColetor;
     float tempCanos;
-    char bombaColetor:1;
-    char bombaCirculacao:1;
-    char aquecedor:1;
-    char valvulaEntrada:1;
-    char valvulaEsgoto:1;
-    char termina:1;
+    char bombaColetor;
+    char bombaCirculacao;
+    char aquecedor;
+    char valvulaEntrada;
+    char valvulaEsgoto;
+    char termina;
 } controlador;
 
 extern controlador statusSistema;
+
+void planta_dadosCompletos(double *dados);
 
 #endif //CONTROLADOR_H
