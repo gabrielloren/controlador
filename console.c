@@ -281,7 +281,7 @@ void console_mostraDados(void)
 	// attron(atrib);
 	// mvprintw(PLANTA_DADOS-1, 0, "%s:   %s", textos[PLANTA_DADOS-1], dados[PLANTA_DADOS-1]!=0?"ERRO":"OK");
 	// attroff(atrib);		// Desativa atributos
-	move(LINHA_NUVEM+2,0);
+	move(LINHA_NUVEM+1,0);
 	refresh();
 	pthread_mutex_unlock(&tela);
 }
@@ -298,8 +298,6 @@ void console_threadConsole(void)
 	pthread_mutex_lock(&tela);
 	move(LINHA_ENTRADA,0);
 	printw("Digite + - p/comandos  ou  X p/terminar: ");
-	move(LINHA_NUVEM,0);
-	printw("[N] RECEBIDO     BYTES= ");
 	refresh();
 	pthread_mutex_unlock(&tela);
 

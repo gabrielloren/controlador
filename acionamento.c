@@ -15,6 +15,7 @@
 #include "console.h"
 
 pthread_mutex_t socketx = PTHREAD_MUTEX_INITIALIZER;
+pthread_mutex_t socketNuvem = PTHREAD_MUTEX_INITIALIZER;
 
 int cria_socket_local(void)
 {
@@ -26,6 +27,23 @@ int cria_socket_local(void)
 		return -1;
 	}
 	return socket_local;
+}
+
+void define_porta_escutada(int socket_local, int porta_escutada) // Porta escutada nuvem
+{
+	struct sockaddr_in servidor; 	/* Endereco completo do servidor e do cliente */
+	int tam_s;						
+
+	memset((char *) &servidor, 0, sizeof(servidor));
+	servidor.sin_family = AF_INET;
+	servidor.sin_addr.s_addr = htonl(INADDR_ANY);
+	servidor.sin_port = htons(porta_escutada);
+
+	tam_s = sizeof(servidor);
+	if (bind(socket_local, (struct sockaddr *) &servidor, tam_s) < 0) {
+		perror("bind");
+		exit(FALHA);
+	}
 }
 
 
@@ -54,8 +72,6 @@ struct sockaddr_in cria_endereco_destino(char *destino, int porta_destino)
 }
 
 
-
-
 void envia_mensagem(int socket_local, struct sockaddr_in endereco_destino, char *mensagem)
 {
 	/* Envia msg ao servidor */
@@ -69,18 +85,36 @@ void envia_mensagem(int socket_local, struct sockaddr_in endereco_destino, char 
 }
 
 
-int recebe_mensagem(int socket_local, char *buffer, int tam_buffer)
+int recebe_mensagem(int socket_local, char *buffer, int tam_buffer, struct sockaddr_in *endereco_cliente)
 {
     pthread_mutex_lock(&socketx);
 	int bytes_recebidos;		/* Numero de bytes recebidos */
 
 	/* Espera pela msg de resposta do servidor */
-	bytes_recebidos = recvfrom(socket_local, buffer, tam_buffer, 0, NULL, 0);
+	bytes_recebidos = recvfrom(socket_local, buffer, tam_buffer, 0, (struct sockaddr *) endereco_cliente, 0);
 	if (bytes_recebidos < 0)
 	{
 		perror("recvfrom");
 	}
     pthread_mutex_unlock(&socketx);
+	return bytes_recebidos;
+}
+
+int recebe_nuvem(int socket_local, char *buffer, int tam_buffer, struct sockaddr_in *endereco_cliente, int *tam_c)
+{
+    pthread_mutex_lock(&socketNuvem);
+	int bytes_recebidos;		/* Numero de bytes recebidos */
+    memset( (char *)endereco_cliente, 0, sizeof(struct sockaddr_in));
+	endereco_cliente->sin_family = AF_INET;
+
+    *tam_c = sizeof(struct sockaddr_in);
+	/* Espera pela msg de resposta do servidor */
+	bytes_recebidos = recvfrom(socket_local, buffer, tam_buffer, 0, (struct sockaddr *) endereco_cliente, tam_c);
+	if (bytes_recebidos < 0)
+	{
+		perror("recvfrom");
+	}
+    pthread_mutex_unlock(&socketNuvem);
 	return bytes_recebidos;
 }
 
@@ -145,7 +179,7 @@ char acionaPeriferico(int socket_local, struct sockaddr_in endereco_destino, cha
     sprintf(bufferOut, "%s %d", device, comando);
 
     envia_mensagem(socket_local, endereco_destino, bufferOut);
-    recebe_mensagem(socket_local, bufferIn, TAM_BUFFER);
+    recebe_mensagem(socket_local, bufferIn, TAM_BUFFER, NULL);
 
     sprintf(device, "z");
     strcat(device, bufferOut);
@@ -190,7 +224,7 @@ float recebeSensor(int socket_local, struct sockaddr_in endereco_destino, char d
 
     envia_mensagem(socket_local, endereco_destino, bufferOut);
     
-    recebe_mensagem(socket_local, bufferIn, TAM_BUFFER);
+    recebe_mensagem(socket_local, bufferIn, TAM_BUFFER, NULL);
 
     int nCampos = separaCampos( bufferIn, campos, 10);
 

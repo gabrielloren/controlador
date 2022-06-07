@@ -20,11 +20,15 @@
 
 int cria_socket_local(void);
 
+void define_porta_escutada(int socket_local, int porta_escutada);
+
 struct sockaddr_in cria_endereco_destino(char *destino, int porta_destino);
 
 void envia_mensagem(int socket_local, struct sockaddr_in endereco_destino, char *mensagem);
 
-int recebe_mensagem(int socket_local, char *buffer, int tam_buffer);
+int recebe_mensagem(int socket_local, char *buffer, int tam_buffer, struct sockaddr_in *endereco_cliente);
+
+int recebe_nuvem(int socket_local, char *buffer, int tam_buffer, struct sockaddr_in *endereco_cliente, int *tam_c);
 
 static int separaCampos( char *buffer, char *campos[], int maxCampos);
 

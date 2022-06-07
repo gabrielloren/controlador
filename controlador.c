@@ -21,14 +21,12 @@
 controlador statusSistema;
 
 
-int socket_local;
-struct sockaddr_in endereco_destino;
-
-
+int socket_local, socket_nuvem;
+struct sockaddr_in endereco_destino, endereco_nuvem;
 
 
 pthread_mutex_t em_dados = PTHREAD_MUTEX_INITIALIZER;
-pthread_t updateData, controlLoop,console;
+pthread_t updateData, controlLoop, console, nuvem;
 
 
 void recebeDados(void){
@@ -58,8 +56,24 @@ void recebeDados(void){
 			tp.tv_sec++;
 		}
 	}
-	
 
+}
+
+void recebeNuvem(void){
+	char bufferIn[TAM_BUFFER];
+	int tam_c;
+    int bytes_recebidos;
+	while(statusSistema.termina == 0){
+		bytes_recebidos = recebe_nuvem(socket_nuvem, bufferIn, TAM_BUFFER, &endereco_nuvem, &tam_c);
+		int data = atoi(bufferIn);
+		if(data >= 30 && data <= 60){
+			envia_mensagem(socket_nuvem, endereco_nuvem, "ok");
+			statusSistema.tempMinimaBoiler = (float)data;
+		}else{
+			envia_mensagem(socket_nuvem, endereco_nuvem, "error");
+	}
+	}
+	
 }
 
 void planta_dadosCompletos(double *dados)
@@ -179,6 +193,8 @@ int main(int argc, char *argv[]){
 	//struct param_t socket_param;
 	int porta_destino = atoi( argv[2]);
     socket_local = cria_socket_local();
+	socket_nuvem = cria_socket_local();
+	define_porta_escutada(socket_nuvem,porta_destino+1);
     endereco_destino = cria_endereco_destino(argv[1], porta_destino);
 
 	struct timespec t;				// Hora atual
@@ -200,8 +216,11 @@ int main(int argc, char *argv[]){
 
 	pthread_create(&updateData, 0, (void *) recebeDados, NULL);
 	pthread_create(&controlLoop, 0, (void *) malhaControle, NULL);
+	pthread_create(&nuvem, 0, (void *) recebeNuvem, NULL);
 
-	console_modoJanela();
+	if(console_modoJanela() < 0){
+		exit(-1);
+	}
 	pthread_create(&console, 0, (void *) console_threadConsole, NULL);
 	int i;
 	while (statusSistema.termina == 0)
