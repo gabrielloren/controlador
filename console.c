@@ -159,13 +159,17 @@ int console_modoJanela(void)
 	if( LINES < PLANTA_DADOS+3 ) {
 		console_modoNormal();
 		printf("Tamanho (altura) do terminal não é suficiente\n");
+		pthread_mutex_lock(&em_dados);
 		statusSistema.termina = 1;
+		pthread_mutex_unlock(&em_dados);
 		return -1;
 	}
 	if( COLS < 80 ) {
 		console_modoNormal();
 		printf("Tamanho (largura) do terminal não é suficiente\n");
+		pthread_mutex_lock(&em_dados);
 		statusSistema.termina = 1;
+		pthread_mutex_unlock(&em_dados);
 		return -1;
 	}
 
