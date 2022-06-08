@@ -315,11 +315,15 @@ void console_threadConsole(void)
 			// 		console_showPlantaTudo();
 			// 		break;
 			case '+':
+					pthread_mutex_lock(&em_dados);
 					statusSistema.tempMinimaBoiler += 0.5;
+					pthread_mutex_unlock(&em_dados);
 					console_mostraDados();
 					break;
 			case '-':
+					pthread_mutex_lock(&em_dados);
 					statusSistema.tempMinimaBoiler -= 0.5;
+					pthread_mutex_unlock(&em_dados);
 					console_mostraDados();
 					break;
 			// case KEY_F(1):

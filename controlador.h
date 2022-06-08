@@ -18,6 +18,8 @@ typedef struct controlador
 
 extern controlador statusSistema;
 
+extern pthread_mutex_t em_dados;
+
 void planta_dadosCompletos(double *dados);
 
 #endif //CONTROLADOR_H

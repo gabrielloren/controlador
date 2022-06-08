@@ -68,7 +68,9 @@ void recebeNuvem(void){
 		int data = atoi(bufferIn);
 		if(data >= 30 && data <= 60){
 			envia_mensagem(socket_nuvem, endereco_nuvem, "ok");
+			pthread_mutex_lock(&em_dados);
 			statusSistema.tempMinimaBoiler = (float)data;
+			pthread_mutex_unlock(&em_dados);
 		}else{
 			envia_mensagem(socket_nuvem, endereco_nuvem, "error");
 	}
