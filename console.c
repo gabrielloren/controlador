@@ -352,7 +352,9 @@ void console_threadConsole(void)
 					printw("TERMINAR !!!");
 					refresh();
 					pthread_mutex_unlock(&tela);
+					pthread_mutex_lock(&em_dados);
 					statusSistema.termina = 1;
+					pthread_mutex_unlock(&em_dados);
 					break;
 			default:
 					break;
