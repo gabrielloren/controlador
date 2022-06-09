@@ -6,5 +6,7 @@ Sistemas Automatizados PPGEAS da UFSC, ministrada pelo professor Rômulo de Oliv
 
 ## Utilização
 
-clonar o repositório e executar o programa: ./controlador <endereço ip planta> <porta de conexão>
-
+clonar o repositório e executar o programa: 
+´´´
+./controlador <endereço ip planta> <porta de conexão>
+´´´
